@@ -54,14 +54,14 @@ namespace certificate {
       return true;
   }
 
-  void creat_private_key( std::string certificate_file, std::string pass, std::string private_key_file ){
+  void creat_private_key( std::string certificate_file, std::string pass, std::string private_key_file ) {
     EVP_PKEY* private_key;
     X509 *certificate;
     STACK_OF(X509) *ca;
 
     std::cout << std::endl;
 
-    if( !read_pk12_certificate( certificate_file, pass, &private_key, &certificate, &ca )){
+    if( !read_pk12_certificate( certificate_file, pass, &private_key, &certificate, &ca ) ) {
         std::cout << "asdf" << std::endl;
     }
 
@@ -107,33 +107,33 @@ namespace certificate {
       EVP_PKEY_free(private_key);
   }
 
-  EVP_PKEY* read_private_key_form_certificate( std::string file, std::string pass ){
+  EVP_PKEY* read_private_key_form_certificate( std::string certificate_file, std::string pass ){
 
       EVP_PKEY* private_key;
       X509 *certificate;
       STACK_OF(X509) *ca = NULL;
 
-      OpenSSL_add_all_algorithms();
-      ERR_load_crypto_strings();
+      read_pk12_certificate( certificate_file, pass, &private_key, &certificate, &ca );
 
-      BIO* certbio = BIO_new(BIO_s_file());
-      if( !BIO_read_filename(certbio, file.c_str())  ){
-          fprintf(stderr, "Error opening file %s\n", file.c_str() );
-          exit(1);
-      }
 
-      PKCS12* p12 = d2i_PKCS12_bio(certbio, NULL);
+      // BIO* certbio = BIO_new(BIO_s_file());
+      // if( !BIO_read_filename(certbio, file.c_str())  ){
+      //     fprintf(stderr, "Error opening file %s\n", file.c_str() );
+      //     exit(1);
+      // }
 
-      if (!p12) {
-          fprintf(stderr, "Error reading PKCS#12 file\n");
-          ERR_print_errors_fp(stderr);
-          exit (1);
-      }
-      if (!PKCS12_parse(p12, pass.c_str(), &private_key, &certificate, &ca)) {
-          fprintf(stderr, "Error parsing PKCS#12 file\n");
-          ERR_print_errors_fp(stderr);
-          exit (1);
-      }
+      // PKCS12* p12 = d2i_PKCS12_bio(certbio, NULL);
+
+      // if (!p12) {
+      //     fprintf(stderr, "Error reading PKCS#12 file\n");
+      //     ERR_print_errors_fp(stderr);
+      //     exit (1);
+      // }
+      // if (!PKCS12_parse(p12, pass.c_str(), &private_key, &certificate, &ca)) {
+      //     fprintf(stderr, "Error parsing PKCS#12 file\n");
+      //     ERR_print_errors_fp(stderr);
+      //     exit (1);
+      // }
       
       BIO_free_all(certbio);
       sk_X509_pop_free(ca, X509_free);
@@ -146,9 +146,6 @@ namespace certificate {
   EVP_PKEY* read_private_key_from_file( std::string file ){
 
       EVP_PKEY* private_key;
-
-      OpenSSL_add_all_algorithms();
-      ERR_load_crypto_strings();
 
       BIO* certbio = BIO_new(BIO_s_file());
       if( !BIO_read_filename(certbio, file.c_str())  ){
@@ -181,17 +178,17 @@ namespace certificate {
     return public_key;
   }
 
-  void test_read_public_key(){
-    EVP_PKEY* public_key = read_public_key( "pubkey.pem" );
-    if( public_key != NULL ){
-      std::cout << "OK" << std::endl;
-      PEM_write_PUBKEY( stdout, public_key );
-    }
-  }
+  // void test_read_public_key(){
+  //   EVP_PKEY* public_key = read_public_key( "pubkey.pem" );
+  //   if( public_key != NULL ){
+  //     std::cout << "OK" << std::endl;
+  //     PEM_write_PUBKEY( stdout, public_key );
+  //   }
+  // }
 
   void read_file( std::string file, char** content ){
-      BIO* digestbio = BIO_new(BIO_s_file());
-      if( !BIO_read_filename(digestbio, file.c_str()) ){
+      BIO* bio = BIO_new(BIO_s_file());
+      if( !BIO_read_filename(bio, file.c_str()) ){
           fprintf(stderr, "Error opening file %s\n", file.c_str() );
           exit(1);
       }
@@ -199,14 +196,14 @@ namespace certificate {
       char inbuf[64];
       size_t inlen;
 
-      while( (inlen = BIO_read(digestbio, inbuf, sizeof(inbuf))) > 0 ){
+      while( (inlen = BIO_read(bio, inbuf, sizeof(inbuf))) > 0 ){
           BIO_write(result, inbuf, inlen);
       }
 
       BUF_MEM *bufferPtr;
       BIO_get_mem_ptr(result, &bufferPtr);
       *content = (*bufferPtr).data;
-      BIO_free_all(digestbio);
+      BIO_free_all(bio);
   }
 
   bool certificate_verify( std::string certificate_file, std::string password ){

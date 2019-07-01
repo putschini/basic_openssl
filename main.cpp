@@ -45,18 +45,18 @@ void sign ( EVP_PKEY* private_key, std::string file_to_sign ) {
     char* file_content;
     certificate::read_file( file_to_sign, &file_content );
     
-    unsigned char* sign_str_encoded;
-    size_t sign_str_encoded_length;
+    unsigned char* str_encoded;
+    size_t str_encoded_length;
 
-    RSA256Sign( private_key, (unsigned char*) file_content, strlen( file_content ), &sign_str_encoded, &sign_str_encoded_length );
+    RSA256Sign( private_key, (unsigned char*) file_content, strlen( file_content ), &str_encoded, &str_encoded_length );
 
-    char* sign_str_decode;
-    Base64Encode( sign_str_encoded, sign_str_encoded_length, &sign_str_decode );
+    char* str_decode;
+    Base64Encode( str_encoded, str_encoded_length, &str_decode );
 
 
     //TODO :: create funtion for writing in files
     BIO*  out = BIO_new_file("digest.sha256", "w");
-    BIO_write( out, sign_str_decode, strlen(sign_str_decode) );
+    BIO_write( out, str_decode, strlen(str_decode) );
     BIO_free_all( out );
 }
 
@@ -85,7 +85,27 @@ void sign_with_pem_file ( int argc, char** argv ) {
 }
 
 void rsa_verify ( int argc, char** argv ) {
+    if ( argc < 4 ) {
+        print_exit( "argc < 4" );
+    }
 
+    std::string pem_file( argv[2] );
+    std::string file_to_verify( argv[3] );
+    std::string sign_file( argv[4] );
+
+    EVP_PKEY* public_key = certificate::read_public_key( pem_file );
+    char* str_decode;
+    certificate::read_file( file_to_verify, &str_decode );
+    
+    unsigned char* str_encoded;
+    size_t str_encoded_length;
+    Base64Decode(str_decode, &str_encoded, &str_encoded_length );
+
+    char* sign_content;
+    certificate::read_file( sign_file, &sign_content );
+
+    bool valid = false;
+    RSAVerifySignature( public_key, str_encoded, str_encoded_length, sign_content, strlen( sign_content ), &valid );
 }
 
 void certificate_verify ( int argc, char** argv ) {
@@ -98,15 +118,13 @@ void certificate_verify ( int argc, char** argv ) {
 }
 
 int main ( int argc, char** argv ) {
-
   if ( argc < 2 ) {
     print_exit( "argc < 2" );
   }
+
   OpenSSL_add_all_algorithms();
   ERR_load_BIO_strings();
   ERR_load_crypto_strings();
-
-  std::string plainText = "My secret message My secret message1.\n";
 
   std::string option ( argv[1] );
   if ( option == "creat_public_key" ) {
@@ -115,26 +133,10 @@ int main ( int argc, char** argv ) {
     creat_public_key( argc, argv );
   } else if ( option == "sign_with_certificate" ) {
     sign_with_certificate( argc, argv );
-  } else if ( option == "sign_with_pem_file" ){
+  } else if ( option == "sign_with_pem_file" ) {
     sign_with_pem_file( argc, argv );
-
-  }else if ( option == "rsa_verify" ) {
-    EVP_PKEY* publickey = certificate::read_public_key( "pubkey.pem" );
-    char* encMessage;
-    certificate::read_file( "digest.sha256", &encMessage );
-    
-     unsigned char* messagedecode;
-    size_t messagedecodelength;
-    Base64Decode(encMessage, &messagedecode, &messagedecodelength );
-
-    bool valid = false;
-    RSAVerifySignature( publickey, messagedecode, messagedecodelength, plainText.c_str(), plainText.length(), &valid );
-
-    if( valid )
-      std::cout << "VALID" << std::endl;
-    else
-      std::cout << "NOT VALID" << std::endl;
-
+  } else if ( option == "rsa_verify" ) {
+    rsa_verify( argc, argv );
   } else if ( option == "certificate_verify" ) {
         certificate_verify( argc, argv );
   } else {
