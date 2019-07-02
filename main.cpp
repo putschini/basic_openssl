@@ -48,17 +48,19 @@ void sign ( EVP_PKEY* private_key, std::string file_to_sign ) {
     unsigned char* str_encoded;
     size_t str_encoded_length;
 
-    PEM_write_PrivateKey(stdout, private_key, NULL, NULL, 0, NULL, NULL);
+    // PEM_write_PrivateKey(stdout, private_key, NULL, NULL, 0, NULL, NULL);
+    // std::cout << "TYPE >>>>> " << EVP_PKEY_base_id( private_key ) << std::endl;
+    // std::cout << std::endl << std::endl;
+    // printf( "%s", file_content );
 
     signature::sign( private_key, (unsigned char*) file_content, strlen( file_content ), &str_encoded, &str_encoded_length );
 
     char* str_decode;
     utils::base_64_encode( str_encoded, str_encoded_length, &str_decode );
 
-
     //TODO :: create funtion for writing in files
-    BIO*  out = BIO_new_file("digest.sha256", "w");
-    BIO_write( out, str_decode, strlen(str_decode) );
+    BIO*  out = BIO_new_file( "signature.sha256", "w" );
+    BIO_write( out, str_decode, strlen( str_decode ) );
     BIO_free_all( out );
 }
 
@@ -88,7 +90,7 @@ void sign_with_pem_file ( int argc, char** argv ) {
 
 void sign_verify ( int argc, char** argv ) {
     if ( argc < 4 ) {
-        utils::print_exit( "argc < 4" );
+        utils::print_exit( "argc < 5" );
     }
 
     std::string pem_file( argv[2] );
@@ -97,14 +99,14 @@ void sign_verify ( int argc, char** argv ) {
 
     EVP_PKEY* public_key = certificate::read_public_key( pem_file );
 
-    PEM_write_PUBKEY( stdout, public_key );
+    // PEM_write_PUBKEY( stdout, public_key );
 
     char* str_decode;
     utils::read_file( file_to_verify, &str_decode );
     
     unsigned char* str_encoded;
     size_t str_encoded_length;
-    utils::base_64_decode(str_decode, &str_encoded, &str_encoded_length );
+    utils::base_64_decode( str_decode, &str_encoded, &str_encoded_length );
 
     char* sign_content;
     utils::read_file( signed_file, &sign_content );

@@ -23,16 +23,26 @@ namespace utils {
             print_error_exit( "Error opening file" + file );
         }
         BIO* result = BIO_new(BIO_s_mem());
-        char inbuf[512];
+        char inbuf[1];
         size_t inlen;
-
+        size_t total_len = 0;
         while( (inlen = BIO_read(bio, inbuf, sizeof(inbuf))) > 0 ) {
             BIO_write(result, inbuf, inlen);
+            total_len += inlen;
         }
 
         BUF_MEM *bufferPtr;
         BIO_get_mem_ptr(result, &bufferPtr);
-        *content = (*bufferPtr).data;
+        *content = (char*) malloc( total_len + 1 );
+        char* c;
+        c = (*bufferPtr).data;
+        // std::cout << total_len << std::endl;
+        for( int i = 0; i < total_len; i++ ){
+            // std::cout << " " << c[i];
+            (*content)[i] = c[i];
+        }
+        // (*content)[total_len]
+        // std::cout << "FINAL" << std::endl;
         BIO_free_all( bio );
     }
 

@@ -42,7 +42,7 @@ namespace signature {
         
         EVP_MD_CTX* verification_context = EVP_MD_CTX_create();
 
-        if ( EVP_DigestVerifyInit( verification_context, NULL, EVP_sha256(), NULL, public_key) <= 0 ) { // Set up verification contex
+        if ( EVP_DigestVerifyInit( verification_context, NULL, EVP_sha256(), NULL, public_key ) <= 0 ) { // Set up verification contex
             utils::print_error_exit( "Erro initializing verification context" );
         }
         if ( EVP_DigestVerifyUpdate( verification_context, mensage, mensage_length ) <= 0 ) { // Update the contex with the original message
